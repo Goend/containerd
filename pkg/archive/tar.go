@@ -190,7 +190,7 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 				err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 					if err != nil {
 						if os.IsNotExist(err) {
-							log.G(ctx).Infof("test-prefix filepath Walk &s not exist", dir)
+							log.G(ctx).Infof("test-prefix filepath Walk %s not exist", dir)
 							err = nil // parent was deleted
 						}
 						return err
