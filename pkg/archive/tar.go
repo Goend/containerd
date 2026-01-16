@@ -313,7 +313,7 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 
 		srcData := io.Reader(tr)
 		srcHdr := hdr
-		log.G(ctx).Infof("test-prefix hdr type  is %c,name is %s", srcHdr.Typeflag, srcHdr.Name)
+		log.G(ctx).Infof("test-prefix hdr type  is %c,hdr name is %s", srcHdr.Typeflag, srcHdr.Name)
 
 		if err := createTarFile(ctx, path, root, srcHdr, srcData, options.NoSameOwner); err != nil {
 			return 0, err
