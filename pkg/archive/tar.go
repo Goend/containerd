@@ -173,11 +173,15 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 		convertWhiteout = options.ConvertWhiteout
 	)
 
+	log.G(ctx).Infof("test-prefix start,root is %s ", root)
+
 	if convertWhiteout == nil {
+		log.G(ctx).Info("test-prefix start,convertWhiteout is  nil.Initing")
 		// handle whiteouts by removing the target files
 		convertWhiteout = func(hdr *tar.Header, path string) (bool, error) {
 			base := filepath.Base(path)
 			dir := filepath.Dir(path)
+			log.G(ctx).Infof("test-prefix start,base is %s,dir is %s", base, dir)
 			if base == whiteoutOpaqueDir {
 				_, err := os.Lstat(dir)
 				if err != nil {
@@ -186,14 +190,17 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 				err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 					if err != nil {
 						if os.IsNotExist(err) {
+							log.G(ctx).Infof("test-prefix filepath Walk %s not exist", dir)
 							err = nil // parent was deleted
 						}
 						return err
 					}
 					if path == dir {
+						log.G(ctx).Info("test-prefix filepath path == dir")
 						return nil
 					}
 					if _, exists := unpackedPaths[path]; !exists {
+						log.G(ctx).Infof("test-prefix remove path %s", dir)
 						err := os.RemoveAll(path)
 						return err
 					}
@@ -205,6 +212,7 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 			if strings.HasPrefix(base, whiteoutPrefix) {
 				originalBase := base[len(whiteoutPrefix):]
 				originalPath := filepath.Join(dir, originalBase)
+				log.G(ctx).Infof("test-prefix originalBase is %s,originalPath is %s", originalBase, originalPath)
 
 				return false, os.RemoveAll(originalPath)
 			}
@@ -231,6 +239,7 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 		}
 
 		size += hdr.Size
+		log.G(ctx).Infof("test-prefix hdr size is %d", hdr.Size)
 
 		// Normalize name, for safety and for a simple is-root check
 		hdr.Name = filepath.Clean(hdr.Name)
@@ -240,6 +249,7 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 			return 0, err
 		}
 		if !accept {
+			log.G(ctx).Info("test-prefix hdr not accept")
 			continue
 		}
 
@@ -254,6 +264,7 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 		if err != nil {
 			return 0, fmt.Errorf("failed to get root path: %w", err)
 		}
+		log.G(ctx).Infof("test-prefix ppath  is %s", ppath)
 
 		// Join to root before joining to parent path to ensure relative links are
 		// already resolved based on the root before adding to parent.
@@ -262,6 +273,7 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 			log.G(ctx).Debugf("file %q ignored: resolved to root", hdr.Name)
 			continue
 		}
+		log.G(ctx).Infof("test-prefix path  is %s", path)
 
 		// If file is not directly under root, ensure parent directory
 		// exists or is created.
@@ -301,6 +313,7 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 
 		srcData := io.Reader(tr)
 		srcHdr := hdr
+		log.G(ctx).Infof("test-prefix hdr type  is %c,hdr name is %s", srcHdr.Typeflag, srcHdr.Name)
 
 		if err := createTarFile(ctx, path, root, srcHdr, srcData, options.NoSameOwner); err != nil {
 			return 0, err
@@ -316,6 +329,7 @@ func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOpti
 
 	for _, hdr := range dirs {
 		path, err := fs.RootPath(root, hdr.Name)
+		log.G(ctx).Infof("test-prefix dir loop  is %s", path)
 		if err != nil {
 			return 0, err
 		}
@@ -375,7 +389,7 @@ func createTarFile(ctx context.Context, path, extractDir string, hdr *tar.Header
 		if err != nil {
 			return err
 		}
-
+		log.G(ctx).Infof("test-prefix link between %s and %s", targetPath, path)
 		if err := link(targetPath, path); err != nil {
 			return err
 		}
